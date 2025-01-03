@@ -8,7 +8,6 @@ enum class ErrorCode
   ERR_RPC,
 };
 
-class ConfigManager;
-extern ConfigManager ConfigManager;
+constexpr int MAX_RPC_SIZE = 5;
 
 #endif // GLOBAL_H

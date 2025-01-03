@@ -19,7 +19,6 @@ public:
 private:
   net::io_context& m_ioc;
   tcp::acceptor m_acceptor;
-  tcp::socket m_socket;
 };
 
 #endif // GATESERVER_H

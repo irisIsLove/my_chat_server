@@ -43,3 +43,10 @@ ConfigManager::operator[](const std::string& sectionName)
     return SectionInfo();
   return m_mapConfig[sectionName];
 }
+
+ConfigManager&
+ConfigManager::getInstance()
+{
+  static ConfigManager instance;
+  return instance;
+}

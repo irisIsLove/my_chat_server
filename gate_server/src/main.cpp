@@ -6,7 +6,7 @@
 int
 main()
 {
-  ConfigManager ConfigManager;
+  auto& ConfigManager = ConfigManager::getInstance();
   unsigned short port = std::atoi(ConfigManager["GateServer"]["port"].c_str());
   try {
     net::io_context ioc{ 1 };

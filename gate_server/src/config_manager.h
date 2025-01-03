@@ -22,9 +22,11 @@ struct SectionInfo
 class ConfigManager
 {
 public:
-  ConfigManager();
-
   SectionInfo operator[](const std::string& sectionName);
+  static ConfigManager& getInstance();
+
+private:
+  ConfigManager();
 
 private:
   std::unordered_map<std::string, SectionInfo> m_mapConfig;

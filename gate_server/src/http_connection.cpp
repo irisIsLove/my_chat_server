@@ -4,8 +4,8 @@
 
 #include <fmt/format.h>
 
-HttpConnection::HttpConnection(tcp::socket&& socket)
-  : m_socket(std::move(socket))
+HttpConnection::HttpConnection(net::io_context& ioc)
+  : m_socket(ioc)
 {
 }
 
@@ -31,6 +31,12 @@ HttpConnection::start()
         fmt::println("exception is {}", e.what());
       }
     });
+}
+
+net::ip::tcp::socket&
+HttpConnection::getSocket()
+{
+  return m_socket;
 }
 
 void
