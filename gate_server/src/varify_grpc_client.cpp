@@ -19,6 +19,6 @@ VarifyGrpcClient::getVarifyCode(std::string_view email)
 VarifyGrpcClient::VarifyGrpcClient()
 {
   std::shared_ptr<Channel> channel =
-    grpc::CreateChannel("0.0.0.0:8081", grpc::InsecureChannelCredentials());
+    grpc::CreateChannel("127.0.0.1:8081", grpc::InsecureChannelCredentials());
   m_stub = VarifyService::NewStub(channel);
 }
