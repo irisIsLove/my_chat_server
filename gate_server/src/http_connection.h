@@ -1,9 +1,11 @@
 #ifndef HTTPCONNECTION_H
 #define HTTPCONNECTION_H
 
-#include <memory>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+
+#include <memory>
+#include <unordered_map>
 
 namespace net = boost::asio;
 namespace beast = boost::beast;
@@ -23,6 +25,7 @@ private:
   void checkDeadline();
   void writeResponse();
   void handleRequest();
+  void preParseGetRequest();
 
 private:
   tcp::socket m_socket;
@@ -31,6 +34,8 @@ private:
   http::response<http::dynamic_body> m_response;
   net::steady_timer m_deadline{ m_socket.get_executor(),
                                 std::chrono::seconds(60) };
+  std::unordered_map<std::string, std::string> m_getParams;
+  std::string m_strGetUrl;
 };
 
 #endif // HTTPCONNECTION_H

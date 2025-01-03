@@ -12,15 +12,16 @@ void
 GateServer::start()
 {
   auto self = shared_from_this();
-  m_acceptor.async_accept(m_socket, [self](boost::system::error_code ec) {
-    try {
-      if (ec) {
+  m_acceptor.async_accept(
+    m_socket, [self](const boost::system::error_code& ec) {
+      try {
+        if (ec) {
+          self->start();
+          return;
+        }
+        std::make_shared<HttpConnection>(std::move(self->m_socket))->start();
         self->start();
-        return;
+      } catch (std::exception& e) {
       }
-      std::make_shared<HttpConnection>(std::move(self->m_socket))->start();
-      self->start();
-    } catch (std::exception& e) {
-    }
-  });
+    });
 }

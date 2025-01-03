@@ -1,5 +1,6 @@
 #include "http_connection.h"
 #include "logic_system.h"
+#include "utils.h"
 
 #include <fmt/format.h>
 
@@ -64,8 +65,9 @@ HttpConnection::handleRequest()
   m_response.keep_alive();
 
   if (m_request.method() == http::verb::get) {
-    bool sucess = LogicSystem::getInstance()->handleGet(m_request.target(),
-                                                        shared_from_this());
+    preParseGetRequest();
+    bool sucess =
+      LogicSystem::getInstance()->handleGet(m_strGetUrl, shared_from_this());
     if (!sucess) {
       m_response.result(http::status::not_found);
       m_response.set(http::field::content_type, "text/plain");
@@ -78,5 +80,56 @@ HttpConnection::handleRequest()
     m_response.set(http::field::server, "GateServer");
     writeResponse();
     return;
+  }
+
+  if (m_request.method() == http::verb::post) {
+    bool sucess = LogicSystem::getInstance()->handlePost(m_request.target(),
+                                                         shared_from_this());
+    if (!sucess) {
+      m_response.result(http::status::not_found);
+      m_response.set(http::field::content_type, "text/plain");
+      beast::ostream(m_response.body()) << "url not found\r\n";
+      writeResponse();
+      return;
+    }
+
+    m_response.result(http::status::ok);
+    m_response.set(http::field::server, "GateServer");
+    writeResponse();
+    return;
+  }
+}
+
+void
+HttpConnection::preParseGetRequest()
+{
+  auto url = m_request.target();
+  auto queryPos = url.find('?');
+  if (queryPos == std::string::npos) {
+    m_strGetUrl = url;
+    return;
+  }
+
+  m_strGetUrl = url.substr(0, queryPos);
+  std::string strQuery = url.substr(queryPos + 1);
+  std::size_t pos = 0;
+  while ((pos = strQuery.find('&')) != std::string::npos) {
+    auto pair = strQuery.substr(0, pos);
+    std::size_t equalPos = pair.find('=');
+    if (equalPos != std::string::npos) {
+      std::string key = urlDecode(pair.substr(0, equalPos));
+      std::string value = urlDecode(pair.substr(equalPos + 1));
+      m_getParams.emplace(key, value);
+    }
+    strQuery.erase(0, pos + 1);
+  }
+
+  if (!strQuery.empty()) {
+    std::size_t equalPos = strQuery.find('=');
+    if (equalPos != std::string::npos) {
+      std::string key = urlDecode(strQuery.substr(0, equalPos));
+      std::string value = urlDecode(strQuery.substr(equalPos + 1));
+      m_getParams.emplace(key, value);
+    }
   }
 }

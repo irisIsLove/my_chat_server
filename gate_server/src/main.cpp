@@ -19,6 +19,7 @@ main()
       });
 
     std::make_shared<GateServer>(ioc, port)->start();
+    fmt::println("Gate Server listen on port: {}", port);
     ioc.run();
   } catch (std::exception& e) {
     fmt::println(stderr, "Error: ", e.what());

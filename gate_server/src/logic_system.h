@@ -20,6 +20,8 @@ public:
 
   bool handleGet(const std::string&, const HttpConnectionPtr&);
   void registGet(std::string_view, const HttpHandler&);
+  void registPost(std::string_view, const HttpHandler&);
+  bool handlePost(const std::string&, const HttpConnectionPtr&);
 
 private:
   LogicSystem();
