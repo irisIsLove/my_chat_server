@@ -1,6 +1,7 @@
 #include "logic_system.h"
 #include "global.h"
 #include "http_connection.h"
+#include "varify_grpc_client.h"
 
 #include <json/json.h>
 
@@ -55,6 +56,7 @@ LogicSystem::LogicSystem()
       }
 
       auto email = srcRoot["email"].asString();
+      auto reply = VarifyGrpcClient::getInstance()->getVarifyCode(email);
       root["error"] = static_cast<int>(ErrorCode::SUCCESS);
       root["email"] = email;
       auto strJson = root.toStyledString();

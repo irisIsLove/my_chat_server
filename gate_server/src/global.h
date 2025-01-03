@@ -8,4 +8,7 @@ enum class ErrorCode
   ERR_RPC,
 };
 
+class ConfigManager;
+extern ConfigManager ConfigManager;
+
 #endif // GLOBAL_H

@@ -1,3 +1,4 @@
+#include "config_manager.h"
 #include "gate_server.h"
 
 #include <fmt/printf.h>
@@ -5,8 +6,9 @@
 int
 main()
 {
+  ConfigManager ConfigManager;
+  unsigned short port = std::atoi(ConfigManager["GateServer"]["port"].c_str());
   try {
-    unsigned short port = 8080;
     net::io_context ioc{ 1 };
     net::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait(
