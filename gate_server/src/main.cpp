@@ -2,10 +2,80 @@
 #include "gate_server.h"
 
 #include <fmt/printf.h>
+#include <hiredis/hiredis.h>
+
+void
+testRedis()
+{
+  std::unique_ptr<redisContext, decltype(&redisFree)> c(
+    redisConnect("127.0.0.1", 6379), redisFree);
+  if (c->err) {
+    fmt::println("Connected to redis error: {}", c->errstr);
+    return;
+  }
+  fmt::println("Connected to redis successfully");
+
+  std::string_view pass = "157158";
+  using ReplyPtr = std::unique_ptr<redisReply, decltype(&freeReplyObject)>;
+  ReplyPtr reply(
+    static_cast<redisReply*>(redisCommand(c.get(), "AUTH %s", pass.data())),
+    freeReplyObject);
+  if (reply->type == REDIS_REPLY_ERROR) {
+    fmt::println("AUTH failed!");
+  } else {
+    fmt::println("AUTH success!");
+  }
+
+  std::string_view command1 = "set stest1 value1";
+  reply.reset(static_cast<redisReply*>(redisCommand(c.get(), command1.data())));
+  if (reply == nullptr) {
+    fmt::println("Excute command1 failed!");
+  }
+
+  if (!(reply->type == REDIS_REPLY_STATUS &&
+          (std::strcmp(reply->str, "OK") == 0) ||
+        std::strcmp(reply->str, "ok") == 0)) {
+    fmt::println("Excute command[{}] failed!", command1);
+    return;
+  }
+  fmt::println("Successful to excute command[{}]!", command1);
+
+  std::string_view command2 = "strlen stest1";
+  reply.reset(static_cast<redisReply*>(redisCommand(c.get(), command2.data())));
+  if (reply->type != REDIS_REPLY_INTEGER) {
+    fmt::println("Excute command[{}] failed!", command2);
+    return;
+  }
+
+  fmt::println(
+    "Successful to excute command[{}]!\n result: The length of 'stest1' is {}",
+    command2,
+    reply->integer);
+
+  std::string_view command3 = "get stest1";
+  reply.reset(static_cast<redisReply*>(redisCommand(c.get(), command3.data())));
+  if (reply->type != REDIS_REPLY_STRING) {
+    fmt::println("Excute command[{}] failed!", command3);
+    return;
+  }
+  fmt::println(
+    "Successful to excute command[{}]!\n result: The value of 'stest1' is {}",
+    command3,
+    reply->str);
+
+  std::string_view command4 = "get stest2";
+  reply.reset(static_cast<redisReply*>(redisCommand(c.get(), command4.data())));
+  if (reply->type != REDIS_REPLY_NIL) {
+    fmt::println("Excute command[{}] failed!", command4);
+    return;
+  }
+  fmt::println("Successful to excute command[{}]!", command4);
+}
 
 int
 main()
 {
+  testRedis();
   auto& ConfigManager = ConfigManager::getInstance();
   unsigned short port = std::atoi(ConfigManager["GateServer"]["port"].c_str());
   try {

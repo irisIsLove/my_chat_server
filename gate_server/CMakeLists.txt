@@ -10,6 +10,7 @@ list(APPEND SOURCES ${MESSAGES_SOURCES})
 
 add_subdirectory(src/messages)
 add_executable(GateServer ${SOURCES})
+add_dependencies(GateServer RpcGenerator)
 
 file(COPY_FILE config.ini ${CMAKE_BINARY_DIR}/config.ini)
 
@@ -17,6 +18,7 @@ find_package(Boost REQUIRED COMPONENTS asio beast property_tree)
 find_package(jsoncpp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(hiredis CONFIG REQUIRED)
 target_link_libraries(GateServer PRIVATE
     Boost::asio Boost::beast Boost::property_tree
-    JsonCpp::JsonCpp fmt::fmt gRPC::grpc++)
+    JsonCpp::JsonCpp fmt::fmt gRPC::grpc++ hiredis::hiredis)
