@@ -99,8 +99,6 @@ testRedisManager()
 int
 main()
 {
-  // testRedis();
-  testRedisManager();
   auto& ConfigManager = ConfigManager::getInstance();
   unsigned short port = std::atoi(ConfigManager["GateServer"]["port"].c_str());
   try {

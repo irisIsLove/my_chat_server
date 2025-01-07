@@ -1,6 +1,7 @@
 #include "logic_system.h"
 #include "global.h"
 #include "http_connection.h"
+#include "redis_manager.h"
 #include "varify_grpc_client.h"
 
 #include <json/json.h>
@@ -40,7 +41,7 @@ LogicSystem::LogicSystem()
     "/get_varify_code", [](const std::shared_ptr<HttpConnection>& connection) {
       auto strBody =
         beast::buffers_to_string(connection->m_request.body().data());
-      fmt::println("receive body is {}", strBody);
+      fmt::println("[get_varify_code]: receive body is {}", strBody);
       connection->m_response.set(http::field::content_type, "text/json");
       Json::Value root;
       Json::Reader reader;
@@ -61,6 +62,56 @@ LogicSystem::LogicSystem()
       root["email"] = email;
       auto strJson = root.toStyledString();
       beast::ostream(connection->m_response.body()) << strJson;
+    });
+
+  registPost(
+    "/user_register", [](const std::shared_ptr<HttpConnection>& connection) {
+      auto strBody =
+        beast::buffers_to_string(connection->m_request.body().data());
+      fmt::println("[user_register]: receive body is {}", strBody);
+      connection->m_response.set(http::field::content_type, "text/json");
+
+      Json::Value root, srcRoot;
+      Json::Reader reader;
+      bool isParse = reader.parse(strBody, srcRoot);
+      if (!isParse) {
+        fmt::println("Failed to parse JSON data!");
+        root["error"] = static_cast<int>(ErrorCode::ERR_JSON);
+        beast::ostream(connection->m_response.body()) << root.toStyledString();
+        return;
+      }
+
+      std::string strCode;
+      bool isGetVarify = RedisManager::getInstance()->get(
+        CODE_PRIFIX + srcRoot["email"].asString(), strCode);
+      if (!isGetVarify) {
+        fmt::println("Get varify code exprired!");
+        root["error"] = static_cast<int>(ErrorCode::ERR_VARIFY_EXPIRED);
+        beast::ostream(connection->m_response.body()) << root.toStyledString();
+        return;
+      }
+
+      if (srcRoot["code"].asString() != strCode) {
+        fmt::println("Varify code is not match!");
+        root["error"] = static_cast<int>(ErrorCode::ERR_VARIFY_CODE);
+        beast::ostream(connection->m_response.body()) << root.toStyledString();
+        return;
+      }
+
+      bool isUserExist =
+        RedisManager::getInstance()->existsKey(srcRoot["user"].asString());
+      if (isUserExist) {
+        fmt::println("User is already exist!");
+        root["error"] = static_cast<int>(ErrorCode::ERR_USER_EXIST);
+        beast::ostream(connection->m_response.body()) << root.toStyledString();
+        return;
+      }
+
+      root["error"] = static_cast<int>(ErrorCode::SUCCESS);
+      root["user"] = srcRoot["user"].asString();
+      root["pass"] = srcRoot["pass"].asString();
+      root["email"] = srcRoot["email"].asString();
+      beast::ostream(connection->m_response.body()) << root.toStyledString();
     });
 }
 
