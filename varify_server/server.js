@@ -3,12 +3,30 @@ const message_proto = require("./proto");
 const emailModule = require('./email')
 const globalModule = require('./global')
 const { v4: uuidv4 } = require('uuid');
+const redisModule = require('./redis')
 
 
 async function getVarifyCode(call, callback) {
     console.log('email is ', call.request.email)
     try {
-        uniqueId = uuidv4()
+        let queryRes = await redisModule.getRedis(globalModule.codePrifix + call.request.email)
+        console.log('query result is ', queryRes)
+        let uniqueId = queryRes
+        if (queryRes == null) {
+            uniqueId = uuidv4()
+            if (uniqueId.length > 4) {
+                uniqueId = uniqueId.substring(0, 4)
+            }
+
+            let setExpire = await redisModule.setRedisExpire(globalModule.codePrifix + call.request.email, uniqueId, 600)
+            if (!setExpire) {
+                callback(null, {
+                    email: call.request.email,
+                    error: globalModule.Errors.RedisError
+                })
+                return
+            }
+        }
         console.log('uniqueId is', uniqueId)
         let strText = '您的验证码为 ' + uniqueId + ' 请在三分钟内完成注册'
 
@@ -31,7 +49,7 @@ async function getVarifyCode(call, callback) {
 
         callback(null, {
             email: call.request.email,
-            error: globalModule.Errors.Success
+            error: globalModule.Errors.Exception
         })
     }
 }
