@@ -8,6 +8,6 @@ enum class ErrorCode
   ERR_RPC,
 };
 
-constexpr int MAX_RPC_SIZE = 5;
+constexpr int MAX_POOL_SIZE = 5;
 
 #endif // GLOBAL_H

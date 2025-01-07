@@ -80,5 +80,5 @@ VarifyGrpcClient::VarifyGrpcClient()
   auto& config = ConfigManager::getInstance();
   auto host = config["VarifyServer"]["host"];
   auto port = config["VarifyServer"]["port"];
-  m_pool = std::make_unique<RpcConnectPool>(MAX_RPC_SIZE, host, port);
+  m_pool = std::make_unique<RpcConnectPool>(MAX_POOL_SIZE, host, port);
 }

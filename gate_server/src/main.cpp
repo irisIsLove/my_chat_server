@@ -1,5 +1,6 @@
 #include "config_manager.h"
 #include "gate_server.h"
+#include "redis_manager.h"
 
 #include <fmt/printf.h>
 #include <hiredis/hiredis.h>
@@ -72,10 +73,34 @@ testRedis()
   fmt::println("Successful to excute command[{}]!", command4);
 }
 
+void
+testRedisManager()
+{
+  auto redis = RedisManager::getInstance();
+  assert(redis->set("blogwebsite", "llfc.club"));
+  std::string value{};
+  assert(redis->get("blogwebsite", value));
+  assert(redis->get("nonekey", value) == false);
+  assert(redis->hSet("bloginfo", "blogwebsite", "llfc.club"));
+  assert(redis->hGet("bloginfo", "blogwebsite") != "");
+  assert(redis->existsKey("bloginfo"));
+  assert(redis->del("bloginfo"));
+  assert(redis->del("bloginfo"));
+  assert(redis->existsKey("bloginfo") == false);
+  assert(redis->lPush("lpushkey1", "lpushvalue1"));
+  assert(redis->lPush("lpushkey1", "lpushvalue2"));
+  assert(redis->lPush("lpushkey1", "lpushvalue3"));
+  assert(redis->rPop("lpushkey1", value));
+  assert(redis->rPop("lpushkey1", value));
+  assert(redis->lPop("lpushkey1", value));
+  assert(redis->lPop("lpushkey2", value) == false);
+}
+
 int
 main()
 {
-  testRedis();
+  // testRedis();
+  testRedisManager();
   auto& ConfigManager = ConfigManager::getInstance();
   unsigned short port = std::atoi(ConfigManager["GateServer"]["port"].c_str());
   try {
