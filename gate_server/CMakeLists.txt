@@ -19,6 +19,10 @@ find_package(jsoncpp CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(hiredis CONFIG REQUIRED)
+find_package(unofficial-mysql-connector-cpp CONFIG REQUIRED)
 target_link_libraries(GateServer PRIVATE
     Boost::asio Boost::beast Boost::property_tree
-    JsonCpp::JsonCpp fmt::fmt gRPC::grpc++ hiredis::hiredis)
+    JsonCpp::JsonCpp fmt::fmt gRPC::grpc++ hiredis::hiredis
+    unofficial::mysql-connector-cpp::connector unofficial::mysql-connector-cpp::connector-jdbc
+    unofficial::libmysql::libmysql
+)

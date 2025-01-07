@@ -4,6 +4,8 @@
 #include "redis_manager.h"
 #include "varify_grpc_client.h"
 
+#include "mysql_manager.h"
+
 #include <json/json.h>
 
 bool
@@ -98,10 +100,12 @@ LogicSystem::LogicSystem()
         return;
       }
 
-      bool isUserExist =
-        RedisManager::getInstance()->existsKey(srcRoot["user"].asString());
-      if (isUserExist) {
-        fmt::println("User is already exist!");
+      int uid =
+        MysqlManager::getInstance()->registerUser(srcRoot["user"].asString(),
+                                                  srcRoot["email"].asString(),
+                                                  srcRoot["pass"].asString());
+      if (uid == 0 || uid == -1) {
+        fmt::println("User or email has been registered!");
         root["error"] = static_cast<int>(ErrorCode::ERR_USER_EXIST);
         beast::ostream(connection->m_response.body()) << root.toStyledString();
         return;
@@ -111,6 +115,7 @@ LogicSystem::LogicSystem()
       root["user"] = srcRoot["user"].asString();
       root["pass"] = srcRoot["pass"].asString();
       root["email"] = srcRoot["email"].asString();
+      root["uid"] = uid;
       beast::ostream(connection->m_response.body()) << root.toStyledString();
     });
 }
