@@ -34,6 +34,7 @@ ConfigManager::ConfigManager()
       fmt::println("  {}: {}", item.first, item.second);
     }
   }
+  fmt::println("config load done");
 }
 
 SectionInfo

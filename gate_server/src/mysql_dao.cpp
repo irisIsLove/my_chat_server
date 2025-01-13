@@ -153,6 +153,7 @@ MysqlDao::registerUser(std::string_view name,
                        std::string_view pass)
 {
   auto con = m_pool->getConnection();
+  Defer defer([this, &con]() { m_pool->returnConnection(std::move(con)); });
   try {
     if (con == nullptr)
       return 0;
@@ -166,22 +167,74 @@ MysqlDao::registerUser(std::string_view name,
     stmt->execute();
 
     SqlStatementPtr stmtResult(con->m_con->createStatement());
+
     SqlResultSetPtr resultSet(
       stmtResult->executeQuery("SELECT @result AS result"));
-    m_pool->returnConnection(std::move(con));
     if (resultSet->next()) {
       int result = resultSet->getInt("result");
       fmt::println("Result: {}", result);
       return result;
     }
-    return -1;
   } catch (sql::SQLException& e) {
-    m_pool->returnConnection(std::move(con));
-
     fmt::println("SQLException: {}", e.what());
     fmt::println("(MySQL error code: {}, SQLState: {})",
                  e.getErrorCode(),
                  e.getSQLState());
-    return -1;
   }
+  return -1;
+}
+
+bool
+MysqlDao::checkEmail(std::string_view name, std::string_view email)
+{
+  auto con = m_pool->getConnection();
+  Defer defer([this, &con]() { m_pool->returnConnection(std::move(con)); });
+  try {
+    if (con == nullptr)
+      return false;
+
+    SqlPrepareStmtPtr stmt(
+      con->m_con->prepareStatement("SELECT email FROM user where name = ?"));
+    stmt->setString(1, name.data());
+
+    SqlResultSetPtr resultSet(stmt->executeQuery());
+    while (resultSet->next()) {
+      fmt::println("Check email: {}", email);
+      if (std::string(email) != resultSet->getString("email"))
+        return false;
+      return true;
+    }
+  } catch (sql::SQLException& e) {
+    fmt::println("SQLException: {}", e.what());
+    fmt::println("(MySQL error code: {}, SQLState: {})",
+                 e.getErrorCode(),
+                 e.getSQLState());
+  }
+  return false;
+}
+
+bool
+MysqlDao::updatePass(std::string_view name, std::string_view newPass)
+{
+  auto con = m_pool->getConnection();
+  Defer defer([this, &con]() { m_pool->returnConnection(std::move(con)); });
+  try {
+    if (con == nullptr)
+      return false;
+
+    SqlPrepareStmtPtr stmt(
+      con->m_con->prepareStatement("UPDATE user SET pwd = ? WHERE name = ?"));
+    stmt->setString(1, newPass.data());
+    stmt->setString(2, name.data());
+
+    int updateCount = stmt->executeUpdate();
+    fmt::println("Update count: {}", updateCount);
+    return updateCount > 0;
+  } catch (sql::SQLException& e) {
+    fmt::println("SQLException: {}", e.what());
+    fmt::println("(MySQL error code: {}, SQLState: {})",
+                 e.getErrorCode(),
+                 e.getSQLState());
+  }
+  return false;
 }

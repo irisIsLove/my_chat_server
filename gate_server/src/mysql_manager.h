@@ -14,6 +14,8 @@ public:
   int registerUser(std::string_view name,
                    std::string_view email,
                    std::string_view pass);
+  bool checkEmail(std::string_view name, std::string_view email);
+  bool updatePass(std::string_view name, std::string_view pass);
 
 private:
   MysqlManager() = default;
