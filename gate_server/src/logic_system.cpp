@@ -177,6 +177,54 @@ LogicSystem::LogicSystem()
       root["email"] = email;
       beast::ostream(connection->m_response.body()) << root.toStyledString();
     });
+
+  registPost(
+    "/user_login", [](const std::shared_ptr<HttpConnection>& connection) {
+      auto strBody =
+        beast::buffers_to_string(connection->m_request.body().data());
+      fmt::println("[user_login]: receive body is {}", strBody);
+      connection->m_response.set(http::field::content_type, "text/json");
+
+      Json::Value root, srcRoot;
+      Json::Reader reader;
+      bool isParse = reader.parse(strBody, srcRoot);
+      if (!isParse) {
+        fmt::println("Failed to parse JSON data!");
+        root["error"] = static_cast<int>(ErrorCode::ERR_JSON);
+        beast::ostream(connection->m_response.body()) << root.toStyledString();
+        return;
+      }
+
+      auto email = srcRoot["email"].asString();
+      auto pass = srcRoot["pass"].asString();
+      UserInfo user;
+
+      // TODO: check email and pass
+      bool isPassValid;
+      if (!isPassValid) {
+        fmt::println("User password not match!");
+        root["error"] = static_cast<int>(ErrorCode::ERR_PASS_INVALID);
+        beast::ostream(connection->m_response.body()) << root.toStyledString();
+        return;
+      }
+
+      // StatusServer verify
+      bool reply;
+      if (reply) {
+        fmt::println("Grpc get chat server failed, error is {}", reply);
+        root["error"] = static_cast<int>(ErrorCode::ERR_RPC);
+        beast::ostream(connection->m_response.body()) << root.toStyledString();
+        return;
+      }
+
+      fmt::println("Success to load userinfo uid is {}", user.uid);
+      root["error"] = static_cast<int>(ErrorCode::SUCCESS);
+      root["uid"] = user.uid;
+      root["token"] = reply;
+      root["host"] = reply;
+      root["port"] = reply;
+      beast::ostream(connection->m_response.body()) << root.toStyledString();
+    });
 }
 
 void

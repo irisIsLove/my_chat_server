@@ -9,7 +9,7 @@ RpcConnectPool::RpcConnectPool(std::size_t poolSize,
   for (std::size_t i = 0; i < poolSize; ++i) {
     std::shared_ptr<Channel> channel = grpc::CreateChannel(
       std::string(host + ':' + port), grpc::InsecureChannelCredentials());
-    m_queStub.emplace(VarifyService::NewStub(channel));
+    m_stubs.emplace(VarifyService::NewStub(channel));
   }
 }
 
@@ -17,8 +17,8 @@ RpcConnectPool::~RpcConnectPool()
 {
   std::lock_guard<std::mutex> lock(m_mtx);
   close();
-  while (!m_queStub.empty()) {
-    m_queStub.pop();
+  while (!m_stubs.empty()) {
+    m_stubs.pop();
   }
 }
 
@@ -36,13 +36,13 @@ RpcConnectPool::getConnection()
   m_cond.wait(lock, [this]() {
     if (m_stop)
       return true;
-    return !m_queStub.empty();
+    return !m_stubs.empty();
   });
   if (m_stop)
     return nullptr;
 
-  auto stub = std::move(m_queStub.front());
-  m_queStub.pop();
+  auto stub = std::move(m_stubs.front());
+  m_stubs.pop();
   return stub;
 }
 
@@ -53,7 +53,7 @@ RpcConnectPool::returnConnection(std::unique_ptr<VarifyService::Stub> stub)
   if (m_stop)
     return;
 
-  m_queStub.push(std::move(stub));
+  m_stubs.push(std::move(stub));
   m_cond.notify_one();
 }
 

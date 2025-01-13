@@ -6,9 +6,16 @@
 #include <atomic>
 #include <condition_variable>
 #include <memory>
-#include <mutex>
 #include <queue>
 #include <thread>
+
+struct UserInfo
+{
+  int uid;
+  std::string name;
+  std::string email;
+  std::string pass;
+};
 
 struct SqlConnection
 {
@@ -58,6 +65,7 @@ public:
                    std::string_view pass);
   bool checkEmail(std::string_view name, std::string_view email);
   bool updatePass(std::string_view name, std::string_view newPass);
+  bool checkPass(std::string_view email, std::string_view pass, UserInfo& user);
 
 private:
   MysqlPoolPtr m_pool;

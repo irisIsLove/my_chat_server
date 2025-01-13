@@ -9,12 +9,12 @@
 #include <condition_variable>
 #include <queue>
 
-using Channel = grpc::Channel;
-using Status = grpc::Status;
-using ClientContext = grpc::ClientContext;
-using GetVarifyRequest = message::GetVarifyRequest;
-using GetVarifyResponse = message::GetVarifyResponse;
-using VarifyService = message::VarifyService;
+using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
+using message::GetVarifyRequest;
+using message::GetVarifyResponse;
+using message::VarifyService;
 
 class RpcConnectPool
 {
@@ -32,7 +32,7 @@ public:
 
 private:
   std::atomic<bool> m_stop = false;
-  StubQueue m_queStub;
+  StubQueue m_stubs;
   std::condition_variable m_cond;
   std::mutex m_mtx;
 };

@@ -238,3 +238,44 @@ MysqlDao::updatePass(std::string_view name, std::string_view newPass)
   }
   return false;
 }
+
+bool
+MysqlDao::checkPass(std::string_view email,
+                    std::string_view pass,
+                    UserInfo& user)
+{
+  auto con = m_pool->getConnection();
+  if (con == nullptr)
+    return false;
+
+  Defer defer([this, &con]() { m_pool->returnConnection(std::move(con)); });
+  try {
+    SqlPrepareStmtPtr stmt(
+      con->m_con->prepareStatement("SELECT * FROM user where email = ?"));
+    stmt->setString(1, email.data());
+
+    SqlResultSetPtr result(stmt->executeQuery());
+    std::string originPass = "";
+
+    while (result->next()) {
+      originPass = result->getString("pwd");
+      fmt::println("Origin pass: {}", originPass);
+      break;
+    }
+
+    if (pass != originPass)
+      return false;
+
+    user.name = result->getString("name");
+    user.email = email;
+    user.uid = result->getInt("uid");
+    user.pass = originPass;
+    return true;
+  } catch (sql::SQLException& e) {
+    fmt::println("SQLException: {}", e.what());
+    fmt::println("(MySQL error code: {}, SQLState: {})",
+                 e.getErrorCode(),
+                 e.getSQLState());
+  }
+  return false;
+}

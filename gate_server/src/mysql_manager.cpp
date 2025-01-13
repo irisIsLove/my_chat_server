@@ -19,3 +19,11 @@ MysqlManager::updatePass(std::string_view name, std::string_view pass)
 {
   return m_dao.updatePass(name, pass);
 }
+
+bool
+MysqlManager::checkPass(std::string_view email,
+                        std::string_view pass,
+                        UserInfo& user)
+{
+  return m_dao.checkPass(email, pass, user);
+}
