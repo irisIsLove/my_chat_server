@@ -4,8 +4,6 @@
 #include "messages/message.grpc.pb.h"
 #include "singleton.h"
 
-#include <grpcpp/grpcpp.h>
-
 #include <condition_variable>
 #include <queue>
 

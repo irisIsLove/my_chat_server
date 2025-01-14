@@ -1,10 +1,10 @@
 #include "logic_system.h"
 #include "global.h"
 #include "http_connection.h"
-#include "redis_manager.h"
-#include "varify_grpc_client.h"
-
 #include "mysql_manager.h"
+#include "redis_manager.h"
+#include "status_grpc_client.h"
+#include "varify_grpc_client.h"
 
 #include <json/json.h>
 
@@ -200,7 +200,8 @@ LogicSystem::LogicSystem()
       UserInfo user;
 
       // TODO: check email and pass
-      bool isPassValid;
+      bool isPassValid =
+        MysqlManager::getInstance()->checkPass(email, pass, user);
       if (!isPassValid) {
         fmt::println("User password not match!");
         root["error"] = static_cast<int>(ErrorCode::ERR_PASS_INVALID);
@@ -209,9 +210,9 @@ LogicSystem::LogicSystem()
       }
 
       // StatusServer verify
-      bool reply;
-      if (reply) {
-        fmt::println("Grpc get chat server failed, error is {}", reply);
+      auto reply = StatusGrpcClient::getInstance()->getChatServer(user.uid);
+      if (reply.error()) {
+        fmt::println("Grpc get chat server failed, error is {}", reply.error());
         root["error"] = static_cast<int>(ErrorCode::ERR_RPC);
         beast::ostream(connection->m_response.body()) << root.toStyledString();
         return;
@@ -220,9 +221,10 @@ LogicSystem::LogicSystem()
       fmt::println("Success to load userinfo uid is {}", user.uid);
       root["error"] = static_cast<int>(ErrorCode::SUCCESS);
       root["uid"] = user.uid;
-      root["token"] = reply;
-      root["host"] = reply;
-      root["port"] = reply;
+      root["token"] = reply.token();
+      root["host"] = reply.host();
+      root["port"] = reply.port();
+      root["email"] = email;
       beast::ostream(connection->m_response.body()) << root.toStyledString();
     });
 }

@@ -2,6 +2,8 @@
 #include "config_manager.h"
 #include "global.h"
 
+#include <grpcpp/grpcpp.h>
+
 RpcConnectPool::RpcConnectPool(std::size_t poolSize,
                                const std::string& host,
                                const std::string& port)

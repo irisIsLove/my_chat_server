@@ -2,7 +2,9 @@
 #define STATUSGRPCCLIENT_H
 
 #include "messages/message.grpc.pb.h"
+#include "singleton.h"
 
+#include <condition_variable>
 #include <queue>
 
 using grpc::Channel;
@@ -23,14 +25,30 @@ public:
                     const std::string& host,
                     const std::string& port);
   ~StatusConnectPool();
+
+  void close();
+  std::unique_ptr<StatusService::Stub> getConnection();
+  void returnConnection(std::unique_ptr<StatusService::Stub> stub);
+
+private:
+  std::atomic<bool> m_stop = false;
+  StubQueue m_stubs;
+  std::condition_variable m_cond;
+  std::mutex m_mtx;
 };
 
-class StatusGrpcClient
+class StatusGrpcClient : public Singleton<StatusGrpcClient>
 {
+  friend class Singleton<StatusGrpcClient>;
+
 public:
+  GetChatServerResponse getChatServer(int uid);
+
+private:
   StatusGrpcClient();
 
 private:
+  std::unique_ptr<StatusConnectPool> m_pool;
 };
 
 #endif // STATUSGRPCCLIENT_H
