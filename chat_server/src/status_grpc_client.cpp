@@ -21,6 +21,24 @@ StatusGrpcClient::getChatServer(int uid)
   return response;
 }
 
+LoginResponse
+StatusGrpcClient::login(int uid, std::string_view token)
+{
+  ClientContext context;
+  LoginResponse response;
+  LoginRequest request;
+  request.set_uid(uid);
+  request.set_token(token);
+
+  auto stub = m_pool->getConnection();
+  Defer defer([this, &stub]() { m_pool->returnConnection(std::move(stub)); });
+  Status status = stub->Login(&context, request, &response);
+  if (!status.ok()) {
+    response.set_error(static_cast<int>(ErrorCode::ERR_RPC));
+  }
+  return response;
+}
+
 StatusGrpcClient::StatusGrpcClient()
 {
   auto& config = ConfigManager::getInstance();

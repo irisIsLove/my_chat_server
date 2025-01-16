@@ -34,7 +34,7 @@ RecvNode::RecvNode(std::uint16_t maxLen, MessageID id)
 }
 
 SendNode::SendNode(const char* message, std::uint16_t maxLen, MessageID id)
-  : MessageNode(maxLen)
+  : MessageNode(maxLen + HEAD_TOTAL_LEN)
   , m_id(id)
 {
   std::uint16_t msgIdHost = net::detail::socket_ops::host_to_network_short(

@@ -43,6 +43,7 @@ class StatusGrpcClient : public Singleton<StatusGrpcClient>
 
 public:
   GetChatServerResponse getChatServer(int uid);
+  LoginResponse login(int uid, std::string_view token);
 
 private:
   StatusGrpcClient();

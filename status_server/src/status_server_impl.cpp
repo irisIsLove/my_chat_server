@@ -42,6 +42,23 @@ StatusServerImpl::Login(ServerContext* context,
                         const LoginRequest* request,
                         LoginResponse* response)
 {
+  std::lock_guard<std::mutex> lock(m_mtxToken);
+
+  auto uid = request->uid();
+  auto token = request->token();
+  auto iter = m_tokens.find(uid);
+  if (iter == m_tokens.end()) {
+    response->set_error(static_cast<int>(ErrorCode::ERR_UID_INVALID));
+    return Status::OK;
+  }
+  if (iter->second != token) {
+    response->set_error(static_cast<int>(ErrorCode::ERR_TOKEN_INVALID));
+    return Status::OK;
+  }
+
+  response->set_error(static_cast<int>(ErrorCode::SUCCESS));
+  response->set_uid(uid);
+  response->set_token(token);
   return Status::OK;
 }
 
@@ -58,7 +75,8 @@ StatusServerImpl::getChatServer()
   std::lock_guard<std::mutex> lock(m_mtxServer);
   auto minServer = m_servers.begin()->second;
   for (auto& server : m_servers) {
-    if (server.second.connectCount < minServer.connectCount) {
+    if (server.second.connectCount <= minServer.connectCount &&
+        !server.second.host.empty()) {
       minServer = server.second;
     }
   }

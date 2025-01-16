@@ -15,6 +15,8 @@ enum class ErrorCode
   ERR_EMAIL_NOT_MATCH,
   ERR_PASS_UP_FAIL,
   ERR_PASS_INVALID,
+  ERR_UID_INVALID,
+  ERR_TOKEN_INVALID,
 };
 
 class Defer

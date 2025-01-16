@@ -27,3 +27,15 @@ MysqlManager::checkPass(std::string_view email,
 {
   return m_dao.checkPass(email, pass, user);
 }
+
+UserInfoPtr
+MysqlManager::getUser(std::string_view name)
+{
+  return m_dao.getUser(name);
+}
+
+UserInfoPtr
+MysqlManager::getUser(int uid)
+{
+  return m_dao.getUser(uid);
+}

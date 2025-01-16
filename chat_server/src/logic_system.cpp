@@ -1,9 +1,14 @@
 #include "logic_system.h"
+#include "mysql_manager.h"
+#include "status_grpc_client.h"
 
 #include <fmt/printf.h>
 #include <json/json.h>
 
-LogicSystem::~LogicSystem() {}
+LogicSystem::~LogicSystem()
+{
+  m_worker.join();
+}
 
 void
 LogicSystem::postMessageToQue(const LogicNodePtr& node)
@@ -37,7 +42,7 @@ LogicSystem::dealMessage()
 {
   for (;;) {
     std::unique_lock<std::mutex> lock(m_mtx);
-    while (m_queMesssage.empty() || !m_isStop) {
+    while (m_queMesssage.empty() && !m_isStop) {
       m_cond.wait(lock);
     }
 
@@ -90,5 +95,27 @@ LogicSystem::onLogin(ChatSessionPtr session,
                root["uid"].asInt(),
                root["token"].asString());
 
-  session->send(root.toStyledString(), id);
+  auto response = StatusGrpcClient::getInstance()->login(
+    root["uid"].asInt(), root["token"].asString());
+  Json::Value responseJson;
+  Defer defer([this, &session, &responseJson]() {
+    auto strResponse = responseJson.toStyledString();
+    fmt::println("[LogicSystem::onLogin] User login response is {}",
+                 strResponse);
+    session->send(strResponse, MessageID::MSG_CHAT_LOGIN_RSP);
+  });
+  responseJson["error"] = response.error();
+  if (response.error() != static_cast<int>(ErrorCode::SUCCESS)) {
+    return;
+  }
+
+  UserInfoPtr user = MysqlManager::getInstance()->getUser(root["uid"].asInt());
+  if (user == nullptr) {
+    responseJson["error"] = static_cast<int>(ErrorCode::ERR_UID_INVALID);
+    return;
+  }
+
+  responseJson["uid"] = user->uid;
+  responseJson["name"] = user->name;
+  responseJson["token"] = response.token();
 }

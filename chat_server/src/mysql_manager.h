@@ -17,6 +17,8 @@ public:
   bool checkEmail(std::string_view name, std::string_view email);
   bool updatePass(std::string_view name, std::string_view pass);
   bool checkPass(std::string_view email, std::string_view pass, UserInfo& user);
+  UserInfoPtr getUser(std::string_view name);
+  UserInfoPtr getUser(int uid);
 
 private:
   MysqlManager() = default;

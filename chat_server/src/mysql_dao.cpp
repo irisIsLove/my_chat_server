@@ -279,3 +279,65 @@ MysqlDao::checkPass(std::string_view email,
   }
   return false;
 }
+
+UserInfoPtr
+MysqlDao::getUser(std::string_view name)
+{
+  auto con = m_pool->getConnection();
+  if (con == nullptr)
+    return nullptr;
+
+  Defer defer([this, &con]() { m_pool->returnConnection(std::move(con)); });
+  try {
+    SqlPrepareStmtPtr stmt(
+      con->m_con->prepareStatement("SELECT * FROM user where name = ?"));
+    stmt->setString(1, name.data());
+
+    SqlResultSetPtr result(stmt->executeQuery());
+    UserInfoPtr user = std::make_shared<UserInfo>();
+    while (result->next()) {
+      user->email = result->getString("email");
+      user->name = result->getString("name");
+      user->uid = result->getInt("uid");
+      break;
+    }
+    return user;
+  } catch (sql::SQLException& e) {
+    fmt::println("SQLException: {}", e.what());
+    fmt::println("(MySQL error code: {}, SQLState: {})",
+                 e.getErrorCode(),
+                 e.getSQLState());
+  }
+  return nullptr;
+}
+
+UserInfoPtr
+MysqlDao::getUser(int uid)
+{
+  auto con = m_pool->getConnection();
+  if (con == nullptr)
+    return nullptr;
+
+  Defer defer([this, &con]() { m_pool->returnConnection(std::move(con)); });
+  try {
+    SqlPrepareStmtPtr stmt(
+      con->m_con->prepareStatement("SELECT * FROM user where uid = ?"));
+    stmt->setInt(1, uid);
+
+    SqlResultSetPtr result(stmt->executeQuery());
+    UserInfoPtr user = std::make_shared<UserInfo>();
+    while (result->next()) {
+      user->email = result->getString("email");
+      user->name = result->getString("name");
+      user->uid = result->getInt("uid");
+      break;
+    }
+    return user;
+  } catch (sql::SQLException& e) {
+    fmt::println("SQLException: {}", e.what());
+    fmt::println("(MySQL error code: {}, SQLState: {})",
+                 e.getErrorCode(),
+                 e.getSQLState());
+  }
+  return nullptr;
+}
