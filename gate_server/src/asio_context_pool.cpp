@@ -19,8 +19,7 @@ AsioContextPool::getIoContext()
 void
 AsioContextPool::stop()
 {
-  for (auto& work : m_works) {
-    work->get_io_context().stop();
+  for (auto& work : m_workGuards) {
     work.reset();
   }
 
@@ -31,10 +30,10 @@ AsioContextPool::stop()
 
 AsioContextPool::AsioContextPool(std::size_t size)
   : m_ioContexts(size)
-  , m_works(size)
 {
   for (std::size_t i = 0; i < size; ++i) {
-    m_works[i] = std::make_unique<Work>(m_ioContexts[i]);
+    auto&& t = boost::asio::make_work_guard(m_ioContexts[i]);
+    m_workGuards.emplace_back(boost::asio::make_work_guard(m_ioContexts[i]));
   }
 
   for (std::size_t i = 0; i < size; ++i) {

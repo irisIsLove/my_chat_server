@@ -6,10 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE MESSAGES_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cc")
-list(APPEND SOURCES ${MESSAGES_SOURCES})
 
 add_subdirectory(src/messages)
-add_executable(GateServer ${SOURCES})
+add_executable(GateServer ${SOURCES} ${MESSAGES_SOURCES})
 add_dependencies(GateServer RpcGenerator)
 
 file(COPY_FILE config.ini ${CMAKE_BINARY_DIR}/config.ini)

@@ -13,8 +13,8 @@ class AsioContextPool : public Singleton<AsioContextPool>
 
 public:
   using IoContext = boost::asio::io_context;
-  using Work = boost::asio::io_context::work;
-  using WorkPtr = std::unique_ptr<Work>;
+  using WokrGuards = std::vector<
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>;
 
 public:
   ~AsioContextPool();
@@ -27,8 +27,8 @@ private:
 
 private:
   std::vector<IoContext> m_ioContexts;
-  std::vector<WorkPtr> m_works;
   std::vector<std::thread> m_threads;
+  WokrGuards m_workGuards;
   std::size_t m_nextIoContext = 0;
 };
 
